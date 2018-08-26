@@ -1,0 +1,67 @@
+% program finds the classifier
+function [w,b,w1,b1, alpha,beta]=classifier1(Ctrain,dtrain,C,kernel,kerpara)
+
+[m,n]=size(Ctrain);
+fprintf(1,'\n_________________________________________\n');
+fprintf(1,'\nfold change\n');
+fprintf(1,'size of data set = %3d x %3d\n', m,n);
+
+m1=length(find(dtrain~=1));
+m2=length(find(dtrain==1));
+
+B=[];
+D=[];
+B=Ctrain(find(dtrain~=1),:);
+D=Ctrain(find(dtrain==1),:);
+
+%calculation of kernel matrices
+if kernel==1
+%     B1 = zeros(m1,m);
+%     B1=evalkernel(B,Ctrain,'linear',kerpara);
+%     D1 = zeros(m2,m);
+%     D1=evalkernel(D,Ctrain,'linear',kerpara);
+B1=B;
+D1= D;
+elseif kernel==2
+    B1 = zeros(m1,m);
+    B1=evalkernel(B,Ctrain,'rbf',kerpara);
+    D1 = zeros(m2,m);
+    D1=evalkernel(D,Ctrain,'rbf',kerpara);
+else
+    B1 = zeros(m1,m);
+    B1=evalkernel(B,Ctrain,'poly',kerpara);
+    D1 = zeros(m2,m);
+    D1=evalkernel(D,Ctrain,'poly',kerpara);
+
+end
+
+e1=ones(m1,1);
+e2=ones(m2,1);
+B1=[B1 e1];% augmented matrix corr to class 1
+D1=[D1 e2];% augmented matrix corr to class 2
+
+K1=zeros(m1,m1);
+Q1=zeros(m1,m1);
+
+% K11=zeros(m1,m1);
+% Q11=zeros(m1,m1);
+
+Q1=(inv(D1'*D1+1e-5*eye(size(D1'*D1))))*B1'; %(H^TH)^{-1}*G'
+K1=B1*Q1;%G*(H^TH)^{-1}*G'
+
+ Q11=(inv(B1'*B1+1e-5*eye(size(B1'*B1))))*D1';
+ K11=D1*Q11;
+
+% K1= K1+1e-2*eye(size(K1));
+% K11= K11+1e-2*eye(size(K11));
+
+f1=-1;
+f2=1;
+w=[];
+b=[];
+w1=[];
+b1=[];
+[w, b, alpha] = tsvc_ker(K1,Q1,f1,C);%calculates the coefficient of hyperplane
+ [w1, b1, beta] = tsvc_ker(K11,Q11,f2,C);%calculates the coefficient of hyperplane
+
+return;
