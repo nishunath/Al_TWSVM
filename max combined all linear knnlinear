@@ -1,0 +1,126 @@
+%training accuracy
+%only the first 5 nearest distances from the hyperplanes
+%discarding the less accuracy given label points
+
+function [W1,W2,B1,B2,times,chosendata]=max_query_allcombined_knnlinear(no_query,input_data,data_label,unlabel_sample,unlabel_group);
+jj=1;
+times=0;
+c1=0.1;
+
+for i=1:no_query
+    disp(i);
+    tic
+    [w1,b1,w2,b2,alpha,beta]=classifier1(input_data,data_label,c1, 1, 0.1);%classifier acc to train data
+    times=times+toc;
+   n=size(unlabel_sample,1);
+   %%        distance calculation for 90 samples
+        hyper1(:,1)=abs(((unlabel_sample*w1))+b1)/norm(w1);
+        hyper1(:,2)=abs(((unlabel_sample*w2))+b2)/norm(w2);
+        dist=abs((hyper1(:,1)-hyper1(:,2)));
+        [B,ix]=sort(dist);
+        
+    %%        for each data find its corresponding class
+    for j=1:size(unlabel_sample,1)
+            [a,b]=min(hyper1(j,:));   %a=min value; b=index/col
+            l(j,:)=b;                 %label for all unlabelled data
+        end
+        labelc(find(l==1),:)=1;
+        labelc(find(l==2),:)=2;
+          
+    %%     accuracy finding          
+        count=nnz(find(unlabel_group == labelc));
+        n=size(unlabel_group,1);
+        accuracy(jj)= (count*100)/n;
+        
+         if accuracy(jj)==100   % if we reach 100% accuracy, just stop
+        W1=w1;
+        B1=b1;
+        
+        W2=w2;
+        B2=b2;
+        chosendata=size(data_label,1);
+        query=repmat(input_data,1);
+        q_label=repmat(data_label,1);
+        break;
+    end
+    
+        
+        if(jj==1)
+            acc=accuracy(jj);
+            
+            W1=w1;
+            B1=b1;
+            
+            W2=w2;
+            B2=b2;
+            
+        end
+   %%        discarding less accuracy labeled data
+        if(jj~=1)
+            if (acc>accuracy(jj)||acc==accuracy(jj))
+                labeldata1=query;
+                labelgroup1=q_label;
+                input_data=[];
+                data_label=[]; 
+                input_data=labeldata1;
+                data_label=labelgroup1;
+                disp('Query discarded:')
+                disp(jj);
+                
+            else
+                W1=w1;
+                B1=b1;
+                
+                W2=w2;
+                B2=b2;
+                acc=accuracy(jj);
+
+            end
+        end
+    %%  number of data chosen after discarding the less accurate data from original data    
+       chosendata=size(input_data,1);
+       disp('chosendata per iteration: ');
+       disp(chosendata);
+       
+          
+    %%      actively chosen next data
+       if((size(ix,1)>5)||(size(ix,1)==5))
+         index=ix(1:5);
+       elseif (size(ix,1)==4)
+         index=ix(1:4);
+     else
+         break;
+     end
+    newdata=unlabel_sample(index,:);
+    label_stor=unlabel_group(index,:);
+    size_newdata=size(newdata,1);
+    
+    
+    query=repmat(input_data,1);
+    q_label=repmat(data_label,1);
+    
+    input_data=[input_data;newdata];
+    data_label=[data_label;label_stor];
+    
+    
+    
+    
+    %%        prepare unlabelled data for next phase
+        idx=[1:size(unlabel_group,1)];
+     
+        new_idx=setdiff(idx,index);
+        unlabel_sample_1=unlabel_sample(new_idx,:);
+        unlabel_group_1=unlabel_group(new_idx,:);
+        
+        unlabel_sample=unlabel_sample_1;
+        unlabel_group=unlabel_group_1;
+        
+       
+    %%     
+        clear w1 b1 w2 b2 hyper1 l labelc
+        jj=jj+1;
+end
+disp('Accuracy in each iteration:');
+    disp(accuracy);
+    
+end
