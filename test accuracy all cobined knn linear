@@ -1,0 +1,27 @@
+function accuracy2=test_acc_allcombined_knnlinear(o,test_data,test_label,W1,W2,B1,B2);%testing accuracy
+    hyper2(:,1)=abs(((test_data*W1))+B1)/norm(W1);
+    hyper2(:,2)=abs(((test_data*W2))+B2)/norm(W2);
+   
+   hyper2(:,1)=abs(((test_data*W1))+B1)/norm(W1);
+    hyper2(:,2)=abs(((test_data*W2))+B2)/norm(W2);
+     
+    for q=1:size(test_data,1)
+        [~,l1(q)]=min(hyper2(q,:));
+    end
+  
+%% distance plotting
+%    m1=(test_label==1);
+%    m2=(test_label==-1);
+%    plot(hyper2(m1,1),hyper2(m1,2),'b*')
+%    hold on
+%    plot(hyper2(m2,1),hyper2(m2,2),'ro')
+
+    count1=nnz(find(l1' == test_label));
+    n1=size(test_label,1);
+    accuracy2= (count1*100)/n1;
+    
+    disp('Test Accuracy :');
+    disp(accuracy2);
+    
+    clear l1 hyper2 
+end
