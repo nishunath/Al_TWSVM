@@ -1,0 +1,74 @@
+function [input_data,data_label]=random_generator(group1,group2,class_1,class_2,train_data,train_label);
+    %% Randomly chosen 2 poits from whole data set
+    ran1 = randi([1 size(group1,1)],1,1);
+    ran2 =randi([1 size(group2,1)],1,1);
+    
+    chosen_point=[class_1(ran1); class_2(ran2)];
+    %% two initial data randomnly chosen out of 690
+%     int_data1=group1(class_1(ran1),:);
+%     int_data2=group2(class_2(ran2),:);
+        int_data1=train_data(chosen_point(1,:),:);
+        int_data2=train_data(chosen_point(2,:),:);
+
+    %% first 2 data point delete from original data number(690-2=688)
+    final_indx=[1:size(train_data,1)]';
+    % unlabel_indx=setdiff(final_indx,[ran1,ran2]);
+    unlabel_indx=setdiff(final_indx,chosen_point);
+    
+    total_data1=train_data(unlabel_indx,:);
+    
+    %% all distances of all data(98) from these two initial points
+    
+    dist1=pdist2(total_data1,int_data1);
+    [dist12,ind1]=sort((dist1));
+    
+    
+    dist2=pdist2(total_data1,int_data2);
+    [dist22,ind2]=sort((dist2));
+    
+    
+    %% taking five 1-knn
+    k_point1=ind1(1:5,:);
+    f_data1=train_data(k_point1,:); 
+    
+    k_point2=ind2(1:5,:);
+    f_data2=train_data(k_point2,:);
+   
+    
+    %% Finding the five-2nn points and its labels
+    for i=1:size(f_data1,1)
+        knn2(i,:)=pdist2(total_data1,f_data1(i,:));
+        [distance1,ind11]=sort(knn2(i,:));
+        two_nnpoint_index(i)=ind11(2);
+        two_nnpoint(i,:)=total_data1(two_nnpoint_index(i),:);
+
+    end
+    
+    %%  deleting 2nd 1nn data+five-2nn points from rest of data (688-5=683)
+    % tobedelete=[(two_nnpoint_index)'];
+    
+    final_indx=[1:size(total_data1,1)]';
+    unlabel_indx2=setdiff(final_indx,two_nnpoint_index);
+    unlabel_data1=train_data(unlabel_indx2,:);
+    
+    %%
+    for i=1:size(f_data2,1)
+        knn21(i,:)=pdist2(unlabel_data1,f_data2(i,:));
+        [distance2,ind12]=sort(knn21(i,:));
+        two_nnpoint_index2(i)=ind12(2);
+        two_nnpoint2(i,:)=unlabel_data1(two_nnpoint_index2(i),:);
+       
+    end
+    
+    %%
+    final_indx1=[1:length(total_data1)]';
+    unlabel_indx2=setdiff(final_indx1,two_nnpoint_index2);
+    unlabel_data2=train_data(unlabel_indx2,:);
+    
+    %%
+    input_data_index=union(two_nnpoint_index,two_nnpoint_index2);
+    unlabel_data_index=setdiff(unlabel_indx,input_data_index);
+    
+    input_data=train_data(input_data_index,:);
+    data_label=train_label(input_data_index);
+end
